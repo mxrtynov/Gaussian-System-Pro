@@ -1,0 +1,272 @@
+﻿<Window x:Class="Gaussian.Client.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Gaussian System Pro" Height="950" Width="1200"
+        WindowStartupLocation="CenterScreen" Background="#0F172A" Closed="Window_Closed">
+
+    <Window.Resources>
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#4361EE"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Height" Value="35"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="10,0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="TabItemStyle" TargetType="TabItem">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="Padding" Value="30,12"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border Background="{TemplateBinding Background}" BorderThickness="0,0,0,2" BorderBrush="{TemplateBinding BorderBrush}">
+                            <ContentPresenter ContentSource="Header"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="MetricCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="12"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Background="#1E293B" BorderBrush="#334155" BorderThickness="0,0,0,1" Padding="15">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Узлы:" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="#F8FAFC" FontSize="13"/>
+                <ComboBox x:Name="ComboWorkers" Width="40" SelectedIndex="1" VerticalContentAlignment="Center" Margin="0,0,20,0" Background="White" Foreground="Black" BorderBrush="#475569">
+                    <ComboBoxItem Content="2"/>
+                    <ComboBoxItem Content="4"/>
+                    <ComboBoxItem Content="6"/>
+                    <ComboBoxItem Content="8"/>
+                </ComboBox>
+                <TextBlock Text="Размер:" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="#F8FAFC" FontSize="13"/>
+                <TextBox x:Name="TxtGenSize" Width="60" Text="1000" VerticalContentAlignment="Center" Margin="0,0,10,0" Background="#334155" Foreground="White" BorderBrush="#475569"/>
+                <TextBlock Text="Кол-во систем:" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="#F8FAFC" FontSize="13"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,15,0">
+                    <TextBlock Text="Плотность:" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="#F8FAFC" FontSize="13"/>
+                    <Slider x:Name="SliderDensity" Width="120" Minimum="0.1" Maximum="100" Value="10" TickFrequency="5" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="LblDensityValue" Text="10%" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="#F8FAFC" FontSize="12" Width="45"/>
+                </StackPanel>
+                <TextBox x:Name="TxtGenCount" Width="40" Text="1" VerticalContentAlignment="Center" Margin="0,0,10,0" Background="#334155" Foreground="White" BorderBrush="#475569"/>
+                <Button Content="Генерировать" Click="BtnGenBatch_Click" Style="{StaticResource PrimaryButtonStyle}" Width="120" Background="#6366F1" Margin="10,0,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <TabControl Grid.Row="1" Margin="0" Background="#0F172A" BorderThickness="0">
+            <TabItem Header="Главная" Style="{StaticResource TabItemStyle}" BorderBrush="#4361EE" Foreground="#F8FAFC">
+                <Grid Margin="15">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="350"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                        <Border Style="{StaticResource MetricCardStyle}" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="ЗАГРУЗКА ДАННЫХ" Foreground="#94A3B8" FontWeight="Bold" Margin="0,0,0,10" FontSize="11"/>
+                                <Button Content="Выбрать матрицу" Click="SelectMatrix_Click" Style="{StaticResource PrimaryButtonStyle}" Background="#64748B" Margin="0,0,0,5"/>
+                                <Button Content="Выбрать вектор b" Click="SelectVector_Click" Style="{StaticResource PrimaryButtonStyle}" Background="#64748B" Margin="0,0,0,5"/>
+                                <TextBlock Text="ИЛИ" HorizontalAlignment="Center" Foreground="#94A3B8" Margin="0,5" FontSize="11"/>
+                                <Button Content="Выбрать папку (Пакет)" Click="SelectFolder_Click" Style="{StaticResource PrimaryButtonStyle}" Background="#64748B"/>
+                                <Border Style="{StaticResource MetricCardStyle}" Margin="0,10,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="ЗАГРУЖЕННЫЕ МАТРИЦЫ" Foreground="#94A3B8" FontWeight="Bold" Margin="0,0,0,10" FontSize="11"/>
+                                        <TextBox x:Name="TxtLoadedMatrices" IsReadOnly="True" Height="200" VerticalScrollBarVisibility="Auto"
+                 FontFamily="Consolas" FontSize="10" Background="#0F172A" Foreground="#F8FAFC" 
+                 BorderThickness="0" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <Button x:Name="BtnSolve" Content="ЗАПУСТИТЬ РАСЧЕТ" Click="BtnSolve_Click" Background="#10B981" Foreground="White" Height="55" FontSize="16" FontWeight="Bold" Margin="0,10,0,20" Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                        <TextBlock Text="АНАЛИТИКА ТЕКУЩЕЙ ЗАДАЧИ" FontWeight="Bold" Margin="0,0,0,10" Foreground="#94A3B8" FontSize="11"/>
+
+                        <TextBlock x:Name="LabelBarSeq" Text="Последовательно: --" Margin="0,0,0,5" Foreground="#CBD5E1" FontSize="12"/>
+                        <Border Background="#334155" Height="20" CornerRadius="4">
+                            <Border x:Name="BarSeq" Background="#94A3B8" Width="0" HorizontalAlignment="Left"/>
+                        </Border>
+
+                        <TextBlock x:Name="LabelBarPar" Text="Параллельно: --" Margin="0,15,0,5" Foreground="#CBD5E1" FontSize="12"/>
+                        <Border Background="#334155" Height="20" CornerRadius="4">
+                            <Border x:Name="BarPar" Background="#4361EE" Width="0" HorizontalAlignment="Left"/>
+                        </Border>
+
+                        <Border Background="#1E293B" CornerRadius="8" Padding="12" Margin="0,20,0,0">
+                            <TextBlock x:Name="TxtReasoning" TextWrapping="Wrap" FontSize="13" FontWeight="Medium" Foreground="#F8FAFC"/>
+                        </Border>
+                    </StackPanel>
+
+                    <Border Grid.Column="1" Background="#0F172A" CornerRadius="8" Padding="10" BorderBrush="#1E293B" BorderThickness="1">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top" Text="ЛОГ ВЫЧИСЛЕНИЙ И ДАННЫХ" Foreground="#94A3B8" FontWeight="Bold" Margin="0,0,0,10" FontSize="11"/>
+                            <TextBox x:Name="TxtLog" IsReadOnly="True" VerticalScrollBarVisibility="Auto" AcceptsReturn="True" 
+                                     FontFamily="Consolas" FontSize="11" Background="#0F172A" Foreground="#F8FAFC" 
+                                     BorderThickness="0" Text="Ожидание ввода..." CaretBrush="#4361EE"/>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Аналитика" Style="{StaticResource TabItemStyle}" Foreground="#F8FAFC" Margin="15,0,-15,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#0F172A">
+                    <StackPanel Margin="20">
+                        <TextBlock Text="Средние показатели за сессию" FontSize="18" FontWeight="Bold" Foreground="#F8FAFC" Margin="0,0,0,15"/>
+
+                        <Grid Margin="0,0,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0" Style="{StaticResource MetricCardStyle}" Margin="0,0,5,0">
+                                <StackPanel>
+                                    <TextBlock Text="Ср. послед." Foreground="#94A3B8" FontSize="10"/>
+                                    <TextBlock x:Name="TxtAvgSeqTime" Text="--" Foreground="#F8FAFC" FontSize="18" FontWeight="Bold"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="1" Style="{StaticResource MetricCardStyle}" Margin="5,0,5,0">
+                                <StackPanel>
+                                    <TextBlock Text="Ср. параллел." Foreground="#94A3B8" FontSize="10"/>
+                                    <TextBlock x:Name="TxtAvgParTime" Text="--" Foreground="#F8FAFC" FontSize="18" FontWeight="Bold"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="2" Style="{StaticResource MetricCardStyle}" Margin="5,0,5,0">
+                                <StackPanel>
+                                    <TextBlock Text="Ср. ускорение" Foreground="#94A3B8" FontSize="10"/>
+                                    <TextBlock x:Name="TxtAvgAccel" Text="--" Foreground="#10B981" FontSize="18" FontWeight="Bold"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="3" Style="{StaticResource MetricCardStyle}" Margin="5,0,5,0">
+                                <StackPanel>
+                                    <TextBlock Text="Время обслуж." Foreground="#94A3B8" FontSize="10"/>
+                                    <TextBlock x:Name="TxtAvgServiceTime" Text="--" Foreground="#F8FAFC" FontSize="18" FontWeight="Bold"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="4" Style="{StaticResource MetricCardStyle}" Margin="5,0,5,0">
+                                <StackPanel>
+                                    <TextBlock Text="λ (вход)" Foreground="#94A3B8" FontSize="10"/>
+                                    <TextBlock x:Name="TxtArrivalRate" Text="--" Foreground="#F59E0B" FontSize="18" FontWeight="Bold"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="5" Style="{StaticResource MetricCardStyle}" Margin="5,0,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="μ (выход)" Foreground="#94A3B8" FontSize="10"/>
+                                    <TextBlock x:Name="TxtServiceRate" Text="--" Foreground="#F59E0B" FontSize="18" FontWeight="Bold"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <Border Style="{StaticResource MetricCardStyle}" Margin="0,0,0,15">
+                            <StackPanel>
+                                <TextBlock Text="Средняя загрузка узлов" FontSize="14" FontWeight="Bold" Foreground="#F8FAFC" Margin="0,0,0,10"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Загрузка:" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,15,0" FontSize="13"/>
+                                    <TextBlock x:Name="TxtAvgNodeLoad" Grid.Column="1" Text="--" Foreground="#10B981" FontSize="28" FontWeight="Bold"/>
+                                </Grid>
+                                <ProgressBar x:Name="NodeLoadProgress" Height="24" Margin="0,10,0,0" Foreground="#10B981" Background="#334155" Value="0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource MetricCardStyle}" Margin="0,0,0,15">
+                            <StackPanel>
+                                <TextBlock Text="Сравнение времени (последовательно vs параллельно)" FontSize="14" FontWeight="Bold" Foreground="#F8FAFC" Margin="0,0,0,10"/>
+                                <Border Background="#0F172A" CornerRadius="6" Height="320" BorderBrush="#334155" BorderThickness="1">
+                                    <Canvas x:Name="ChartCanvas" Width="Auto" Height="320" Background="#0F172A" ClipToBounds="True"/>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource MetricCardStyle}" Margin="0,0,0,15">
+                            <StackPanel>
+                                <TextBlock Text="Загрузка узлов по задачам" FontSize="14" FontWeight="Bold" Foreground="#F8FAFC" Margin="0,0,0,10"/>
+                                <Border Background="#0F172A" CornerRadius="6" Height="280" BorderBrush="#334155" BorderThickness="1">
+                                    <Canvas x:Name="NodeLoadCanvas" Width="Auto" Height="280" Background="#0F172A" ClipToBounds="True"/>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Тест узлов" Style="{StaticResource TabItemStyle}" Foreground="#F8FAFC" Margin="28,0,-28,0">
+                <StackPanel Margin="20">
+                    <Border Style="{StaticResource MetricCardStyle}" Margin="0,0,0,15">
+                        <StackPanel>
+                            <TextBlock Text="Тест производительности при разном количестве узлов" FontSize="16" FontWeight="Bold" Foreground="#F8FAFC" Margin="0,0,0,15"/>
+                            <TextBlock Text="Тест будет запущен для всех загруженных матриц" Foreground="#94A3B8" FontSize="11" Margin="0,0,0,10"/>
+                            <TextBlock Text="Для каждого размера матрицы тест прогоняется на 1, 2, 4, 6, 8 узлах" Foreground="#94A3B8" FontSize="11" Margin="0,0,0,15"/>
+                            <Button x:Name="BtnRunWorkerTest" Content="ЗАПУСТИТЬ ТЕСТ ВСЕХ МАТРИЦ" Click="BtnRunWorkerTest_Click" Style="{StaticResource PrimaryButtonStyle}" Background="#6366F1" Width="250" Height="45" FontSize="14"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource MetricCardStyle}" Margin="0,0,0,15">
+                        <StackPanel>
+                            <TextBlock Text="График зависимости времени от количества узлов" FontSize="14" FontWeight="Bold" Foreground="#F8FAFC" Margin="0,0,0,10"/>
+                            <Border Background="#0F172A" CornerRadius="6" Height="450" BorderBrush="#334155" BorderThickness="1">
+                                <Canvas x:Name="WorkerChartCanvas" Width="Auto" Height="450" Background="#0F172A" ClipToBounds="True"/>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+
+        <StatusBar Grid.Row="2" Padding="10,8" Background="#0F172A" BorderBrush="#1E293B" BorderThickness="0,1,0,0">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock x:Name="StatusCores" Foreground="#94A3B8" FontSize="11"/>
+                <Separator Margin="15,0" Background="#334155" Width="1"/>
+                <TextBlock Text="Готов" Foreground="#10B981" FontSize="11"/>
+                <ProgressBar x:Name="ProgressIndicator" Width="120" Height="10" IsIndeterminate="True" Visibility="Collapsed" Margin="15,0,0,0" Foreground="#4361EE" Background="#334155"/>
+            </StackPanel>
+        </StatusBar>
+    </Grid>
+</Window>
+    
+    
