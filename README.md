@@ -61,16 +61,6 @@
 - Visual Studio 2022 / VS Code / любой редактор с поддержкой C#.
 - Достаточно свободных портов (по умолчанию с 9000).
 
-# Установка и запуск
-
-## 1. Скачать проект
-```bash
-git clone https://github.com/mxrtynov/RIS_Martynov_ITP_31.git
-```
-## 2. Запустить проект
-```
-cd RIS_Martynov_ITP_31 && dotnet build -c Release && cd Gaussian.Client && dotnet run
-```
 
 # Использование программы
 
