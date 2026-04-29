@@ -34,6 +34,14 @@ namespace Gaussian.Client
             if (!Directory.Exists(TargetDir)) Directory.CreateDirectory(TargetDir);
             Loaded += MainWindow_Loaded;
             BtnSolve.IsEnabled = false;
+            this.Loaded += (sender, args) =>
+            {
+                if (SliderDensity != null && LblDensityValue != null)
+                {
+                    SliderDensity.ValueChanged += SliderDensity_ValueChanged;
+                    LblDensityValue.Text = $"{SliderDensity.Value:F0}%";
+                }
+            };
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
