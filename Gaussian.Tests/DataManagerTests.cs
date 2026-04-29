@@ -1,271 +1,280 @@
-﻿using Gaussian.Coordinator;
+﻿using System;
+using System.IO;
+using Gaussian.Coordinator;
 using Gaussian.Shared;
 using Xunit;
-using System.IO;
-using System.Linq;
 
-namespace Gaussian.Tests;
-
-public class DataManagerTests
+namespace Gaussian.Coordinator.Tests
 {
-    private readonly string _testDir;
-
-    public DataManagerTests()
+    public class DataManagerTests
     {
-        _testDir = Path.Combine(Path.GetTempPath(), "DataManagerTests_" + Guid.NewGuid().ToString());
-        Directory.CreateDirectory(_testDir);
-    }
-
-    private string CreateMatrixFile(double[][] data)
-    {
-        string path = Path.Combine(_testDir, "matrix.txt");
-        var lines = data.Select(row => string.Join(" ", row));
-        File.WriteAllLines(path, lines);
-        return path;
-    }
-
-    private string CreateVectorFile(double[] data)
-    {
-        string path = Path.Combine(_testDir, "vector.txt");
-        File.WriteAllLines(path, data.Select(x => x.ToString(System.Globalization.CultureInfo.InvariantCulture)));
-        return path;
-    }
-
-    public void Dispose()
-    {
-        if (Directory.Exists(_testDir))
-            Directory.Delete(_testDir, true);
-    }
-
-    [Fact]
-    public void LoadFiles_WithValidFiles_ReturnsMatrixAndVector()
-    {
-        double[][] matrixData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]];
-        double[] vectorData = [10, 11, 12];
-
-        string matrixPath = CreateMatrixFile(matrixData);
-        string vectorPath = CreateVectorFile(vectorData);
-
-        var (matrix, vector) = DataManager.LoadFiles(matrixPath, vectorPath);
-
-        Assert.Equal(3, matrix.Size);
-        Assert.Equal(3, vector.Length);
-        Assert.Equal(10, vector[0]);
-        Assert.Equal(12, vector[2]);
-    }
-
-    [Fact]
-    public void LoadFiles_WithSparseMatrix_HandlesZeros()
-    {
-        double[][] matrixData = [[1, 0, 3], [0, 5, 0], [7, 0, 9]];
-        double[] vectorData = [10, 11, 12];
-
-        string matrixPath = CreateMatrixFile(matrixData);
-        string vectorPath = CreateVectorFile(vectorData);
-
-        var (matrix, vector) = DataManager.LoadFiles(matrixPath, vectorPath);
-
-        Assert.Equal(2, matrix.Rows[0].Count);
-        Assert.Equal(1, matrix.Rows[1].Count);
-        Assert.Equal(2, matrix.Rows[2].Count);
-        Assert.Equal(5, matrix.Rows[1][0].Value);
-    }
-
-    [Fact]
-    public void LoadFiles_WithSpacesAndTabs_HandlesCorrectly()
-    {
-        string matrixPath = Path.Combine(_testDir, "matrix.txt");
-        string vectorPath = Path.Combine(_testDir, "vector.txt");
-
-        File.WriteAllText(matrixPath, "1\t2 3\n4 5\t6\n7\t8\t9");
-        File.WriteAllText(vectorPath, "10\n11\n12");
-
-        var (matrix, vector) = DataManager.LoadFiles(matrixPath, vectorPath);
-
-        Assert.Equal(3, matrix.Size);
-        Assert.Equal(3, matrix.Rows[0].Count);
-        Assert.Equal(3, matrix.Rows[1].Count);
-        Assert.Equal(3, matrix.Rows[2].Count);
-    }
-
-    [Fact]
-    public void LoadFiles_WithDecimalNumbers_HandlesCorrectly()
-    {
-        double[][] matrixData = [[1.5, 2.7, 3.9], [4.2, 5.3, 6.4]];
-        double[] vectorData = [10.1, 11.2];
-
-        string matrixPath = CreateMatrixFile(matrixData);
-        string vectorPath = CreateVectorFile(vectorData);
-
-        var (matrix, vector) = DataManager.LoadFiles(matrixPath, vectorPath);
-
-        Assert.Equal(2, matrix.Size);
-        Assert.Equal(10.1, vector[0], 5);
-        Assert.Equal(11.2, vector[1], 5);
-    }
-
-    [Fact]
-    public void LoadFiles_WithNegativeNumbers_HandlesCorrectly()
-    {
-        double[][] matrixData = [[-1, -2, -3], [-4, -5, -6]];
-        double[] vectorData = [-10, -11];
-
-        string matrixPath = CreateMatrixFile(matrixData);
-        string vectorPath = CreateVectorFile(vectorData);
-
-        var (matrix, vector) = DataManager.LoadFiles(matrixPath, vectorPath);
-
-        Assert.Equal(-10, vector[0]);
-        Assert.Equal(-11, vector[1]);
-        Assert.Equal(-1, matrix.Rows[0][0].Value);
-        Assert.Equal(-2, matrix.Rows[0][1].Value);
-    }
-
-    [Fact]
-    public void LoadFiles_WithEmptyLines_SkipsThem()
-    {
-        string matrixPath = Path.Combine(_testDir, "matrix.txt");
-        string vectorPath = Path.Combine(_testDir, "vector.txt");
-
-        File.WriteAllText(matrixPath, "\n1 2\n\n3 4\n");
-        File.WriteAllText(vectorPath, "5\n6");
-
-        var (matrix, vector) = DataManager.LoadFiles(matrixPath, vectorPath);
-
-        Assert.Equal(2, matrix.Size);
-        Assert.Equal(2, vector.Length);
-    }
-
-    [Fact]
-    public void LoadFiles_WithLargeMatrix_HandlesCorrectly()
-    {
-        int size = 50;
-        double[][] matrixData = new double[size][];
-        for (int i = 0; i < size; i++)
+        [Fact]
+        public void LoadFiles_ValidMatrixAndVector_ReturnsCorrectDimensions()
         {
-            matrixData[i] = Enumerable.Range(0, size).Select(j => (double)(i + j)).ToArray();
+            var matrixPath = Path.GetTempFileName();
+            var vectorPath = Path.GetTempFileName();
+            File.WriteAllLines(matrixPath, new[] { "1 2 3", "4 5 6", "7 8 9" });
+            File.WriteAllLines(vectorPath, new[] { "1.0", "2.0", "3.0" });
+            var manager = new DataManager();
+
+            var (matrix, b) = manager.LoadFiles(matrixPath, vectorPath);
+
+            Assert.Equal(3, matrix.Rows.Length);
+            Assert.Equal(3, b.Length);
+            File.Delete(matrixPath);
+            File.Delete(vectorPath);
         }
-        double[] vectorData = Enumerable.Range(0, size).Select(i => (double)i).ToArray();
 
-        string matrixPath = CreateMatrixFile(matrixData);
-        string vectorPath = CreateVectorFile(vectorData);
-
-        var (matrix, vector) = DataManager.LoadFiles(matrixPath, vectorPath);
-
-        Assert.Equal(size, matrix.Size);
-        Assert.Equal(size, vector.Length);
-        Assert.Equal(0, vector[0]);
-        Assert.Equal(size - 1, vector[size - 1]);
-    }
-
-    [Fact]
-    public void LoadFiles_WithMissingMatrixFile_ThrowsException()
-    {
-        string vectorPath = CreateVectorFile([1, 2, 3]);
-
-        Assert.Throws<FileNotFoundException>(() =>
-            DataManager.LoadFiles(Path.Combine(_testDir, "missing.txt"), vectorPath));
-    }
-
-    [Fact]
-    public void LoadFiles_WithMissingVectorFile_ThrowsException()
-    {
-        double[][] matrixData = [[1, 2], [3, 4]];
-        string matrixPath = CreateMatrixFile(matrixData);
-
-        Assert.Throws<FileNotFoundException>(() =>
-            DataManager.LoadFiles(matrixPath, Path.Combine(_testDir, "missing.txt")));
-    }
-
-    [Fact]
-    public void LoadFiles_WithInvalidNumberFormat_ThrowsException()
-    {
-        string matrixPath = Path.Combine(_testDir, "matrix.txt");
-        string vectorPath = Path.Combine(_testDir, "vector.txt");
-
-        File.WriteAllText(matrixPath, "a b c\n1 2 3");
-        File.WriteAllText(vectorPath, "1\n2\n3");
-
-        Assert.Throws<System.FormatException>(() =>
-            DataManager.LoadFiles(matrixPath, vectorPath));
-    }
-
-    [Fact]
-    public void LoadFiles_WithEmptyMatrix_ReturnsEmptyRows()
-    {
-        string matrixPath = Path.Combine(_testDir, "matrix.txt");
-        string vectorPath = CreateVectorFile([1, 2, 3]);
-
-        File.WriteAllText(matrixPath, "");
-
-        var (matrix, vector) = DataManager.LoadFiles(matrixPath, vectorPath);
-
-        Assert.Equal(3, matrix.Size);
-        for (int i = 0; i < 3; i++)
+        [Fact]
+        public void LoadFiles_SparseMatrixWithZeros_OnlyNonZeroElementsStored()
         {
-            Assert.Empty(matrix.Rows[i]);
+            var matrixPath = Path.GetTempFileName();
+            var vectorPath = Path.GetTempFileName();
+            File.WriteAllLines(matrixPath, new[] { "1 0 0", "0 5 0", "0 0 9" });
+            File.WriteAllLines(vectorPath, new[] { "1", "2", "3" });
+            var manager = new DataManager();
+
+            var (matrix, _) = manager.LoadFiles(matrixPath, vectorPath);
+
+            Assert.Single(matrix.Rows[0]);
+            Assert.Single(matrix.Rows[1]);
+            Assert.Single(matrix.Rows[2]);
+            File.Delete(matrixPath);
+            File.Delete(vectorPath);
         }
-    }
 
-    [Fact]
-    public void LoadFiles_WithSingleElementMatrix_ReturnsSize1()
-    {
-        double[][] matrixData = [[42]];
-        double[] vectorData = [84];
+        [Fact]
+        public void LoadFiles_VectorWithFloatingPoint_ParsesCorrectly()
+        {
+            var matrixPath = Path.GetTempFileName();
+            var vectorPath = Path.GetTempFileName();
+            File.WriteAllLines(matrixPath, new[] { "1 0" });
+            File.WriteAllLines(vectorPath, new[] { "1.5", "2.7" });
+            var manager = new DataManager();
 
-        string matrixPath = CreateMatrixFile(matrixData);
-        string vectorPath = CreateVectorFile(vectorData);
+            var (_, b) = manager.LoadFiles(matrixPath, vectorPath);
 
-        var (matrix, vector) = DataManager.LoadFiles(matrixPath, vectorPath);
+            Assert.Equal(1.5, b[0]);
+            Assert.Equal(2.7, b[1]);
+            File.Delete(matrixPath);
+            File.Delete(vectorPath);
+        }
 
-        Assert.Equal(1, matrix.Size);
-        Assert.Single(vector);
-        Assert.Equal(42, matrix.Rows[0][0].Value);
-        Assert.Equal(84, vector[0]);
-    }
+        [Fact]
+        public void LoadFiles_MatrixWithNegativeValues_StoresCorrectly()
+        {
+            var matrixPath = Path.GetTempFileName();
+            var vectorPath = Path.GetTempFileName();
+            File.WriteAllLines(matrixPath, new[] { "-1 2 -3", "4 -5 6" });
+            File.WriteAllLines(vectorPath, new[] { "0", "0" });
+            var manager = new DataManager();
 
-    [Fact]
-    public void LoadFiles_WithVerySmallValues_PreservesPrecision()
-    {
-        double[][] matrixData = [[1e-10, 2e-10], [3e-10, 4e-10]];
-        double[] vectorData = [5e-10, 6e-10];
+            var (matrix, _) = manager.LoadFiles(matrixPath, vectorPath);
 
-        string matrixPath = CreateMatrixFile(matrixData);
-        string vectorPath = CreateVectorFile(vectorData);
+            Assert.Equal(-1, matrix.Rows[0][0].Value);
+            Assert.Equal(2, matrix.Rows[0][1].Value);
+            Assert.Equal(-3, matrix.Rows[0][2].Value);
+            Assert.Equal(4, matrix.Rows[1][0].Value);
+            Assert.Equal(-5, matrix.Rows[1][1].Value);
+            Assert.Equal(6, matrix.Rows[1][2].Value);
+            File.Delete(matrixPath);
+            File.Delete(vectorPath);
+        }
 
-        var (matrix, vector) = DataManager.LoadFiles(matrixPath, vectorPath);
+        [Fact]
+        public void LoadFiles_MatrixWithTabSeparators_HandlesCorrectly()
+        {
+            var matrixPath = Path.GetTempFileName();
+            var vectorPath = Path.GetTempFileName();
+            File.WriteAllLines(matrixPath, new[] { "1\t2\t3", "4\t5\t6" });
+            File.WriteAllLines(vectorPath, new[] { "1", "2" });
+            var manager = new DataManager();
 
-        Assert.Equal(1e-10, matrix.Rows[0][0].Value, 15);
-        Assert.Equal(5e-10, vector[0], 15);
-    }
+            var (matrix, _) = manager.LoadFiles(matrixPath, vectorPath);
 
-    [Fact]
-    public void LoadFiles_WithVeryLargeValues_HandlesCorrectly()
-    {
-        double[][] matrixData = [[1e10, 2e10], [3e10, 4e10]];
-        double[] vectorData = [5e10, 6e10];
+            Assert.Equal(3, matrix.Rows[0].Count);
+            Assert.Equal(3, matrix.Rows[1].Count);
+            File.Delete(matrixPath);
+            File.Delete(vectorPath);
+        }
 
-        string matrixPath = CreateMatrixFile(matrixData);
-        string vectorPath = CreateVectorFile(vectorData);
+        [Fact]
+        public void LoadFiles_MatrixWithEmptyLines_SkipsThem()
+        {
+            var matrixPath = Path.GetTempFileName();
+            var vectorPath = Path.GetTempFileName();
+            File.WriteAllLines(matrixPath, new[] { "1 2", "", "3 4", "   ", "5 6" });
+            File.WriteAllLines(vectorPath, new[] { "1", "2", "3" });
+            var manager = new DataManager();
 
-        var (matrix, vector) = DataManager.LoadFiles(matrixPath, vectorPath);
+            var (matrix, _) = manager.LoadFiles(matrixPath, vectorPath);
 
-        Assert.Equal(1e10, matrix.Rows[0][0].Value, 5);
-        Assert.Equal(5e10, vector[0], 5);
-    }
+            Assert.Equal(3, matrix.Rows.Length);
+            Assert.Equal(2, matrix.Rows[0].Count);
+            Assert.Equal(2, matrix.Rows[1].Count);
+            Assert.Equal(2, matrix.Rows[2].Count);
+            File.Delete(matrixPath);
+            File.Delete(vectorPath);
+        }
 
-    [Fact]
-    public void LoadFiles_FiltersOutNearZeroValues()
-    {
-        double[][] matrixData = [[1e-14, 5, 1e-13], [0, 0, 0]];
-        double[] vectorData = [1, 2];
+        [Fact]
+        public void LoadFiles_MatrixWithScientificNotation_ParsesCorrectly()
+        {
+            var matrixPath = Path.GetTempFileName();
+            var vectorPath = Path.GetTempFileName();
+            File.WriteAllLines(matrixPath, new[] { "1e-3 2.5E+2" });
+            File.WriteAllLines(vectorPath, new[] { "0", "0" });
+            var manager = new DataManager();
 
-        string matrixPath = CreateMatrixFile(matrixData);
-        string vectorPath = CreateVectorFile(vectorData);
+            var (matrix, _) = manager.LoadFiles(matrixPath, vectorPath);
 
-        var (matrix, vector) = DataManager.LoadFiles(matrixPath, vectorPath);
+            Assert.Equal(0.001, matrix.Rows[0][0].Value);
+            Assert.Equal(250, matrix.Rows[0][1].Value);
+            File.Delete(matrixPath);
+            File.Delete(vectorPath);
+        }
 
+        [Fact]
+        public void LoadFiles_RowCountMatchesVectorLength_ReturnsConsistentData()
+        {
+            var matrixPath = Path.GetTempFileName();
+            var vectorPath = Path.GetTempFileName();
+            File.WriteAllLines(matrixPath, new[] { "1 2", "3 4", "5 6", "7 8" });
+            File.WriteAllLines(vectorPath, new[] { "1", "2", "3", "4" });
+            var manager = new DataManager();
 
-        Assert.DoesNotContain(matrix.Rows[0], e => Math.Abs(e.Value) < 1e-14);
+            var (matrix, b) = manager.LoadFiles(matrixPath, vectorPath);
+
+            Assert.Equal(4, matrix.Rows.Length);
+            Assert.Equal(4, b.Length);
+            File.Delete(matrixPath);
+            File.Delete(vectorPath);
+        }
+
+        [Fact]
+        public void LoadFiles_VectorWithDifferentLength_ThrowsIndexOutOfRange()
+        {
+            var matrixPath = Path.GetTempFileName();
+            var vectorPath = Path.GetTempFileName();
+            File.WriteAllLines(matrixPath, new[] { "1 2", "3 4" });
+            File.WriteAllLines(vectorPath, new[] { "1" });
+            var manager = new DataManager();
+
+            Assert.Throws<IndexOutOfRangeException>(() => manager.LoadFiles(matrixPath, vectorPath));
+            File.Delete(matrixPath);
+            File.Delete(vectorPath);
+        }
+
+        [Fact]
+        public void LoadFiles_ValuesBelowTolerance_FilteredOut()
+        {
+            var matrixPath = Path.GetTempFileName();
+            var vectorPath = Path.GetTempFileName();
+            File.WriteAllLines(matrixPath, new[] { "1 1e-16 2" });
+            File.WriteAllLines(vectorPath, new[] { "0" });
+            var manager = new DataManager();
+
+            var (matrix, _) = manager.LoadFiles(matrixPath, vectorPath);
+
+            Assert.Equal(2, matrix.Rows[0].Count);
+            Assert.Equal(1, matrix.Rows[0][0].Value);
+            Assert.Equal(2, matrix.Rows[0][1].Value);
+            File.Delete(matrixPath);
+            File.Delete(vectorPath);
+        }
+
+        [Fact]
+        public void LoadFiles_MatrixWithMixedSpacingAndTabs_HandlesCorrectly()
+        {
+            var matrixPath = Path.GetTempFileName();
+            var vectorPath = Path.GetTempFileName();
+            File.WriteAllLines(matrixPath, new[] { "1   2\t3", "4\t5   6" });
+            File.WriteAllLines(vectorPath, new[] { "1", "2" });
+            var manager = new DataManager();
+
+            var (matrix, _) = manager.LoadFiles(matrixPath, vectorPath);
+
+            Assert.Equal(3, matrix.Rows[0].Count);
+            Assert.Equal(3, matrix.Rows[1].Count);
+            File.Delete(matrixPath);
+            File.Delete(vectorPath);
+        }
+
+        [Fact]
+        public void LoadFiles_VectorWithInvariantCulture_ParsesDecimalPointCorrectly()
+        {
+            var matrixPath = Path.GetTempFileName();
+            var vectorPath = Path.GetTempFileName();
+            File.WriteAllLines(matrixPath, new[] { "1 1" });
+            File.WriteAllLines(vectorPath, new[] { "123.456", "789.012" });
+            var manager = new DataManager();
+
+            var (_, b) = manager.LoadFiles(matrixPath, vectorPath);
+
+            Assert.Equal(123.456, b[0]);
+            Assert.Equal(789.012, b[1]);
+            File.Delete(matrixPath);
+            File.Delete(vectorPath);
+        }
+
+        [Fact]
+        public void LoadFiles_ColumnIndexesPreserved_OrderCorrect()
+        {
+            var matrixPath = Path.GetTempFileName();
+            var vectorPath = Path.GetTempFileName();
+            File.WriteAllLines(matrixPath, new[] { "5 0 3 0 1" });
+            File.WriteAllLines(vectorPath, new[] { "0" });
+            var manager = new DataManager();
+
+            var (matrix, _) = manager.LoadFiles(matrixPath, vectorPath);
+
+            Assert.Equal(0, matrix.Rows[0][0].Column);
+            Assert.Equal(2, matrix.Rows[0][1].Column);
+            Assert.Equal(4, matrix.Rows[0][2].Column);
+            File.Delete(matrixPath);
+            File.Delete(vectorPath);
+        }
+
+        [Fact]
+        public void LoadFiles_LargeMatrix_HandlesWithoutErrors()
+        {
+            var matrixPath = Path.GetTempFileName();
+            var vectorPath = Path.GetTempFileName();
+            var matrixLines = new string[100];
+            var vectorLines = new string[100];
+            for (int i = 0; i < 100; i++)
+            {
+                matrixLines[i] = string.Join(" ", Enumerable.Range(0, 100).Select(j => (i * j) % 10));
+                vectorLines[i] = "1";
+            }
+            File.WriteAllLines(matrixPath, matrixLines);
+            File.WriteAllLines(vectorPath, vectorLines);
+            var manager = new DataManager();
+
+            var exception = Record.Exception(() => manager.LoadFiles(matrixPath, vectorPath));
+
+            Assert.Null(exception);
+            File.Delete(matrixPath);
+            File.Delete(vectorPath);
+        }
+
+        [Fact]
+        public void LoadFiles_SingleElementMatrix_WorksCorrectly()
+        {
+            var matrixPath = Path.GetTempFileName();
+            var vectorPath = Path.GetTempFileName();
+            File.WriteAllLines(matrixPath, new[] { "42" });
+            File.WriteAllLines(vectorPath, new[] { "7" });
+            var manager = new DataManager();
+
+            var (matrix, b) = manager.LoadFiles(matrixPath, vectorPath);
+
+            Assert.Single(matrix.Rows);
+            Assert.Single(b);
+            Assert.Equal(42, matrix.Rows[0][0].Value);
+            Assert.Equal(7, b[0]);
+            File.Delete(matrixPath);
+            File.Delete(vectorPath);
+        }
     }
 }

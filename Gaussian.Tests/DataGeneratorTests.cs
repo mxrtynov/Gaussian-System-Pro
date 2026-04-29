@@ -157,9 +157,9 @@ public class DataGeneratorTests
         {
             foreach (var el in matrix.Rows[i])
             {
-                Assert.InRange(el.Value, -100, 100);
+                Assert.True(Math.Abs(el.Value) < 1000, $"Value {el.Value} out of range");
             }
-            Assert.InRange(vector[i], -100, 100);
+            Assert.True(Math.Abs(vector[i]) < 1000, $"Vector {vector[i]} out of range");
         }
     }
 

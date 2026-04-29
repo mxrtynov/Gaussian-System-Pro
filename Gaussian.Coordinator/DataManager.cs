@@ -6,16 +6,16 @@ using Gaussian.Shared;
 
 namespace Gaussian.Coordinator
 {
-    public static class DataManager
+    public class DataManager
     {
-        public static (SparseMatrix, double[]) LoadFiles(string matrixPath, string vectorPath)
+        public (SparseMatrix, double[]) LoadFiles(string matrixPath, string vectorPath)
         {
             var bLines = File.ReadAllLines(vectorPath);
             int n = bLines.Length;
             double[] b = new double[n];
 
             for (int i = 0; i < n; i++)
-                b[i] = double.Parse(bLines[i].Trim(), CultureInfo.InvariantCulture);
+                b[i] = double.Parse(bLines[i], CultureInfo.InvariantCulture);
 
             var matrix = new SparseMatrix(n);
             int rowIdx = 0;

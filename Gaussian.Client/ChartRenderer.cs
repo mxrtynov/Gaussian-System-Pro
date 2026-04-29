@@ -348,34 +348,24 @@ namespace Gaussian.Client
             double legendX = 15;
             double legendY = canvas.ActualHeight - 20;
 
-            Rectangle parRect = new Rectangle { Width = 12, Height = 12, Fill = new SolidColorBrush(Color.FromRgb(67, 97, 238)) };
-            Canvas.SetTop(parRect, legendY - 30);
-            Canvas.SetLeft(parRect, legendX);
-            canvas.Children.Add(parRect);
-
             TextBlock parText = new TextBlock
             {
-                Text = "Параллельно (яркий)",
+                Text = "Последовательно (яркий)",
                 FontSize = 10,
                 Foreground = new SolidColorBrush(Color.FromRgb(203, 213, 225))
             };
-            Canvas.SetTop(parText, legendY - 32);
-            Canvas.SetLeft(parText, legendX + 18);
+            Canvas.SetTop(parText, legendY - 30);
+            Canvas.SetLeft(parText, legendX);
             canvas.Children.Add(parText);
-
-            Rectangle seqRect = new Rectangle { Width = 12, Height = 12, Fill = new SolidColorBrush(Color.FromRgb(100, 116, 139)) };
-            Canvas.SetTop(seqRect, legendY - 12);
-            Canvas.SetLeft(seqRect, legendX);
-            canvas.Children.Add(seqRect);
 
             TextBlock seqText = new TextBlock
             {
-                Text = "Последовательно (тёмный)",
+                Text = "Параллельно (темный)",
                 FontSize = 10,
                 Foreground = new SolidColorBrush(Color.FromRgb(203, 213, 225))
             };
             Canvas.SetTop(seqText, legendY - 14);
-            Canvas.SetLeft(seqText, legendX + 18);
+            Canvas.SetLeft(seqText, legendX);
             canvas.Children.Add(seqText);
         }
     }

@@ -158,14 +158,14 @@
 
                             <Border Grid.Column="0" Style="{StaticResource MetricCardStyle}" Margin="0,0,5,0">
                                 <StackPanel>
-                                    <TextBlock Text="Ср. послед." Foreground="#94A3B8" FontSize="10"/>
+                                    <TextBlock Text="Ср. параллел." Foreground="#94A3B8" FontSize="10"/>
                                     <TextBlock x:Name="TxtAvgSeqTime" Text="--" Foreground="#F8FAFC" FontSize="18" FontWeight="Bold"/>
                                 </StackPanel>
                             </Border>
 
                             <Border Grid.Column="1" Style="{StaticResource MetricCardStyle}" Margin="5,0,5,0">
                                 <StackPanel>
-                                    <TextBlock Text="Ср. параллел." Foreground="#94A3B8" FontSize="10"/>
+                                    <TextBlock Text="Ср. послед." Foreground="#94A3B8" FontSize="10"/>
                                     <TextBlock x:Name="TxtAvgParTime" Text="--" Foreground="#F8FAFC" FontSize="18" FontWeight="Bold"/>
                                 </StackPanel>
                             </Border>

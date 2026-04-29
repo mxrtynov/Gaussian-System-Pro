@@ -147,27 +147,28 @@ namespace Gaussian.Tests
             int n = 3;
             var matrix = new SparseMatrix(n);
 
-            matrix.Rows[0].Add(new MatrixElement { Column = 0, Value = 1 });
-            matrix.Rows[0].Add(new MatrixElement { Column = 1, Value = 2 });
-            matrix.Rows[0].Add(new MatrixElement { Column = 2, Value = 3 });
-            matrix.Rows[1].Add(new MatrixElement { Column = 0, Value = 4 });
-            matrix.Rows[1].Add(new MatrixElement { Column = 1, Value = 5 });
-            matrix.Rows[1].Add(new MatrixElement { Column = 2, Value = 6 });
-            matrix.Rows[2].Add(new MatrixElement { Column = 0, Value = 7 });
-            matrix.Rows[2].Add(new MatrixElement { Column = 1, Value = 8 });
-            matrix.Rows[2].Add(new MatrixElement { Column = 2, Value = 9 });
+            matrix.Rows[0].Add(new MatrixElement { Column = 0, Value = 2 }); 
+            matrix.Rows[0].Add(new MatrixElement { Column = 1, Value = 1 });
+            matrix.Rows[0].Add(new MatrixElement { Column = 2, Value = -1 });
+            matrix.Rows[1].Add(new MatrixElement { Column = 0, Value = -3 });
+            matrix.Rows[1].Add(new MatrixElement { Column = 1, Value = -1 });
+            matrix.Rows[1].Add(new MatrixElement { Column = 2, Value = 2 });
+            matrix.Rows[2].Add(new MatrixElement { Column = 0, Value = -2 });
+            matrix.Rows[2].Add(new MatrixElement { Column = 1, Value = 1 });
+            matrix.Rows[2].Add(new MatrixElement { Column = 2, Value = 2 });
 
-            double[] b = [6, 15, 24];
+            double[] b = [8, -11, -3];
 
             double[] solution = engine.SolveSequential(matrix, b, out double ms);
+            double[] expected = [2, 3, -1];
 
             Assert.NotNull(solution);
             Assert.Equal(3, solution.Length);
-            Assert.False(double.IsNaN(solution[0]));
-            Assert.False(double.IsNaN(solution[1]));
-            Assert.False(double.IsNaN(solution[2]));
+            for (int i = 0; i < 3; i++)
+            {
+                Assert.Equal(expected[i], solution[i], 5);
+            }
         }
-
         [Theory]
         [InlineData(500, 0.3)]
         [InlineData(1000, 0.3)]

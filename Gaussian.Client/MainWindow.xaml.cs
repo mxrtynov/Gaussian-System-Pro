@@ -115,7 +115,7 @@ namespace Gaussian.Client
             });
         }
 
-        private void BtnGenBatch_Click(object sender, RoutedEventArgs e)
+        private async void BtnGenBatch_Click(object sender, RoutedEventArgs e)
         {
             if (!int.TryParse(TxtGenSize.Text, out int n) || !int.TryParse(TxtGenCount.Text, out int count)) return;
             double density = SliderDensity.Value / 100.0;
@@ -149,6 +149,9 @@ namespace Gaussian.Client
                 _batchQueue.Add(newTask);
                 _testMatrices.Add(newTask);
                 TxtLog.AppendText($"Добавлено: {currentSize}x{currentSize}\n");
+
+                await DisplayMatrixPreview(mPath, currentSize);
+                await DisplayVectorPreview(vPath);
             }
 
             TxtLog.AppendText($"--- Всего в очереди: {_batchQueue.Count} ---\n");
@@ -276,6 +279,10 @@ namespace Gaussian.Client
                 var task = tasksToRun[idx];
                 TxtLog.AppendText($"\n>>> ОБРАБОТКА: {task.Name} ({task.Size}x{task.Size})...\n");
 
+                await DisplayMatrixPreview(task.MatrixPath, task.Size);
+
+                await DisplayVectorPreview(task.VectorPath);
+
                 var res = await Task.Run(() => _coordinator.HandleRequest(new SolveRequest { MatrixPath = task.MatrixPath, FreeTermsPath = task.VectorPath }, workers));
 
                 completedResults.Add((task, res));
@@ -300,10 +307,23 @@ namespace Gaussian.Client
 
                 TxtLog.AppendText($"\n[РЕЗУЛЬТАТЫ]");
                 TxtLog.AppendText($"\n    Невязка: {res.Residual:E3}");
-                TxtLog.AppendText($"\n    Время последовательно: {res.SequentialTimeMs / 1000:F3} с");
-                TxtLog.AppendText($"\n    Время параллельно: {res.ParallelTimeMs / 1000:F3} с");
+                TxtLog.AppendText($"\n    Время параллельно: {res.SequentialTimeMs / 1000:F3} с");
+                TxtLog.AppendText($"\n    Время последовательно: {res.ParallelTimeMs / 1000:F3} с");
                 TxtLog.AppendText($"\n    Ускорение: {res.Acceleration:F2}x");
                 TxtLog.AppendText($"\n    Эффективность: {res.Efficiency:F1}%");
+
+                if (res.Solution != null && res.Solution.Length > 0)
+                {
+                    TxtLog.AppendText($"\n\n[ПЕРВЫЕ 10 ЭЛЕМЕНТОВ РЕШЕНИЯ]:");
+                    int displayCount = Math.Min(10, res.Solution.Length);
+                    for (int i = 0; i < displayCount; i++)
+                    {
+                        TxtLog.AppendText($"\n    x[{i}] = {res.Solution[i]:F6}");
+                    }
+                    if (res.Solution.Length > 10)
+                        TxtLog.AppendText($"\n    ... и ещё {res.Solution.Length - 10} элементов");
+                }
+
                 TxtLog.AppendText("\n------------------------------------------------------------\n");
                 TxtLog.ScrollToEnd();
 
@@ -336,6 +356,99 @@ namespace Gaussian.Client
 
             BtnSolve.IsEnabled = true;
             ProgressIndicator.Visibility = Visibility.Collapsed;
+        }
+
+        private async Task DisplayMatrixPreview(string matrixPath, int size)
+        {
+            try
+            {
+                string output = $"\n[ПРЕВЬЮ МАТРИЦЫ] Первые 10x10 элементов (всего {size}x{size}):\n";
+
+
+                TxtLog.AppendText(output);
+
+                Console.Write(output);
+
+                var lines = await File.ReadAllLinesAsync(matrixPath);
+                int rowsToShow = Math.Min(10, lines.Length);
+
+                string header = "        ";
+                for (int col = 0; col < Math.Min(10, size); col++)
+                {
+                    header += $"Col{col,-10} ";
+                }
+                header += "\n";
+                TxtLog.AppendText(header);
+                Console.Write(header);
+
+                for (int i = 0; i < rowsToShow; i++)
+                {
+                    string rowText = $"Row{i,-3} ";
+                    var values = lines[i].Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                    int colsToShow = Math.Min(10, values.Length);
+
+                    for (int j = 0; j < colsToShow; j++)
+                    {
+                        double val = double.Parse(values[j], CultureInfo.InvariantCulture);
+                        rowText += $"{val,10:F4} ";
+                    }
+                    rowText += "\n";
+
+                    TxtLog.AppendText(rowText);
+                    Console.Write(rowText);
+                }
+
+                if (size > 10)
+                {
+                    string moreText = $"\n    ... и ещё {size - 10} строк(и) и {size - 10} столбцов(а)\n\n";
+                    TxtLog.AppendText(moreText);
+                    Console.Write(moreText);
+                }
+
+                TxtLog.ScrollToEnd();
+            }
+            catch (Exception ex)
+            {
+                string error = $"\n[ОШИБКА] Не удалось прочитать матрицу: {ex.Message}\n";
+                TxtLog.AppendText(error);
+                Console.WriteLine(error);
+            }
+        }
+
+        private async Task DisplayVectorPreview(string vectorPath)
+        {
+            try
+            {
+                string output = $"[ПРЕВЬЮ ВЕКТОРА] Первые 10 элементов:\n";
+                TxtLog.AppendText(output);
+                Console.Write(output);
+
+                var lines = await File.ReadAllLinesAsync(vectorPath);
+                int elementsToShow = Math.Min(10, lines.Length);
+
+                for (int i = 0; i < elementsToShow; i++)
+                {
+                    double val = double.Parse(lines[i], CultureInfo.InvariantCulture);
+                    string line = $"    b[{i}] = {val,10:F6}\n";
+                    TxtLog.AppendText(line);
+                    Console.Write(line);
+                }
+
+                if (lines.Length > 10)
+                {
+                    string moreText = $"    ... и ещё {lines.Length - 10} элементов\n\n";
+                    TxtLog.AppendText(moreText);
+                    Console.Write(moreText);
+                }
+
+                TxtLog.ScrollToEnd();
+            }
+            catch (Exception ex)
+            {
+                string error = $"\n[ОШИБКА] Не удалось прочитать вектор: {ex.Message}\n";
+                TxtLog.AppendText(error);
+                Console.WriteLine(error);
+            }
         }
 
         private void SaveSolutionToFile(SolveResponse response, string matrixName)
